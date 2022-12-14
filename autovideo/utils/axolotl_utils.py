@@ -94,12 +94,13 @@ def produce_by_path(fitted_pipeline, video_path):
     video_name = video_path.split('/')[-1]
     shutil.copy(video_path, tmp_dir)
 
+    # minimum size is 4
     dataset = {
-        'd3mIndex': [0],
-        'video': [video_name]
+        'd3mIndex': [0,1,2,3],
+        'video': [video_name,video_name,video_name,video_name],
+        'label': [0,0,0,0]
     }
     dataset = pd.DataFrame(data=dataset)
-
     # Produce
     predictions = produce(test_dataset=dataset,
                           test_media_dir=tmp_dir,

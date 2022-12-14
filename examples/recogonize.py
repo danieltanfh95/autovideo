@@ -1,6 +1,8 @@
 import os
 import argparse
-
+import uuid
+from autovideo import produce
+import shutil
 import pandas as pd
 
 
@@ -26,10 +28,26 @@ def run(args):
         fitted_pipeline = torch.load(args.load_path, map_location="cpu")
 
     # Produce
-    from autovideo import produce_by_path
-    predictions = produce_by_path(fitted_pipeline, args.video_path)
+    tmp_dir = os.path.join("tmp", str(uuid.uuid4()))
+    os.makedirs(tmp_dir, exist_ok=True)
+    video_name = args.video_path.split('/')[-1]
+    shutil.copy(args.video_path, tmp_dir)
+
+    # minimum size is 4
+    dataset = {
+        'd3mIndex': [0,1,2,3],
+        'video': [video_name,video_name,video_name,video_name],
+        'label': [0,0,0,0]
+    }
+    dataset = pd.DataFrame(data=dataset)
+    # Produce
+    predictions = produce(test_dataset=dataset,
+                          test_media_dir=tmp_dir,
+                          target_index=2,
+                          fitted_pipeline=fitted_pipeline)
     
-    map_label = {0:'brush_hair', 1:'cartwheel', 2: 'catch', 3:'chew', 4:'clap',5:'climb'}
+    shutil.rmtree(tmp_dir)
+    map_label = {0:'normal', 1:'suicide'}
     out = map_label[predictions['label'][0]]
     logger.info('Detected Action: %s', out)
 
